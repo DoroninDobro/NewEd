@@ -53,75 +53,21 @@ def ask_gpt(prompt):
 
 class ChatbotApp(wx.Frame):
     def __init__(self, *args, **kw):
-        style = wx.FRAME_SHAPED | wx.SIMPLE_BORDER
-        super(ChatbotApp, self).__init__(style=style, *args, **kw)
-        
-        self.hasShape = False
-        self.delta = None
-
-        self.bmp = wx.Bitmap("cat.png", wx.BITMAP_TYPE_PNG)
-
-        self.SetClientSize((self.bmp.GetWidth(), self.bmp.GetHeight()))
-
-        dc = wx.ClientDC(self)
-        dc.DrawBitmap(self.bmp, 0, 0, True)
-        self.SetWindowShape()
-
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
-        self.Bind(wx.EVT_WINDOW_CREATE, self.SetWindowShape)
-        self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
-        self.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
-        self.Bind(wx.EVT_MOTION, self.OnMouseMove)
-        self.Bind(wx.EVT_RIGHT_UP, self.OnRightUp)
-        self.Bind(wx.EVT_KEY_UP, self.on_key_up)
-
+        super(ChatbotApp, self).__init__(*args, **kw)
         self.init_ui()
-
-    def SetWindowShape(self, evt=None):
-    	img = wx.Image('cat.png', wx.BITMAP_TYPE_PNG)
-    	r = img.ConvertToRegion()
-    	self.hasShape = self.SetShape(r)
-
-    def OnPaint(self, evt):
-        dc = wx.PaintDC(self)
-        dc.SetBackground(wx.Brush("#A1FFA1"))  # Светло-салатовый цвет
-        dc.Clear()  # Эта строка очистит текущий фон и применит новый.
-        dc.DrawBitmap(self.bmp, 0, 0, True)
-
-
-    def OnLeftDown(self, evt):
-        self.CaptureMouse()
-        pos = self.ClientToScreen(evt.GetPosition())
-        origin = self.GetPosition()
-        self.delta = wx.Point(pos.x - origin.x, pos.y - origin.y)
-
-    def OnMouseMove(self, evt):
-        if evt.Dragging() and evt.LeftIsDown():
-            pos = self.ClientToScreen(evt.GetPosition())
-            newPos = (pos.x - self.delta.x, pos.y - self.delta.y)
-            self.Move(newPos)
-
-    def OnLeftUp(self, evt):
-        if self.HasCapture():
-            self.ReleaseMouse()
-
-    def OnRightUp(self, evt):
-        self.Close()
 
     def init_ui(self):
         pnl = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
-        chat_height = int(self.GetSize().GetHeight() * 0.10)
 
-        vbox.Add((-1,200))
-        self.text_history = wx.TextCtrl(pnl, size=(-1, chat_height), style=wx.TE_MULTILINE | wx.TE_READONLY)
+        self.text_history = wx.TextCtrl(pnl, style=wx.TE_MULTILINE | wx.TE_READONLY)
         self.input_field = wx.TextCtrl(pnl)
         self.send_button = wx.Button(pnl, label='Send')
         self.send_button.Bind(wx.EVT_BUTTON, self.send_message)
 
-        vbox.Add(self.text_history, proportion=0, flag=wx.EXPAND | wx.LEFT, border=20)  # Отступ слева
-        vbox.Add(self.input_field, flag=wx.EXPAND | wx.LEFT, border=20)  # Отступ слева
-        vbox.Add(self.send_button, flag=wx.EXPAND | wx.LEFT, border=20)  # Отступ слева
+        vbox.Add(self.text_history, proportion=1, flag=wx.EXPAND)
+        vbox.Add(self.input_field, flag=wx.EXPAND)
+        vbox.Add(self.send_button, flag=wx.EXPAND)
 
         pnl.SetSizer(vbox)
 
@@ -136,10 +82,6 @@ class ChatbotApp(wx.Frame):
             self.text_history.AppendText(f"ChatGPT: {response}\n")
             save_key_moments(user_message, response)
             self.input_field.Clear()
-
-    def on_key_up(self, event):
-        if event.GetKeyCode() == wx.WXK_ESCAPE:  # Если нажата клавиша Esc
-            self.Close(True)
 
 if __name__ == '__main__':
     app = wx.App()
