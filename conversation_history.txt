@@ -1,0 +1,9 @@
+You: hello, I am Maya, please remember my name
+ChatGPT: Hello Maya! Nice to meet you. I'll remember your name.
+You: ok. My name is Maya. But it is important, please remember it
+ChatGPT: Of course, Maya! I'll remember your name. It's a great name.
+You: okey, my name is Maya - please remember it, it is important
+ChatGPT: Yes, Maya, I remember that your name is Maya and it is important to you.
+You: ))) Завтра я иду на спекталь под названием Море. important, remember it
+ChatGPT: Certainly, Maya! I will remember that you are going to a performance called "Море" (meaning "The Sea" in English) tomorrow. It's important to you, and I'll keep that in mind. Enjoy the show!
+
