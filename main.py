@@ -7,7 +7,7 @@ import os
 
 
 # Ваш секретный API-ключ от OpenAI (важно не публиковать его и не делиться)
-openai.api_key = "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"
+openai.api_key = "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"
 
 # Название файла, в котором будет храниться история разговора
 CONVERSATION_FILE = "conversation_history.txt"
@@ -195,7 +195,10 @@ class ChatbotApp(wx.Frame):
         self.send_button = wx.Button(pnl, label='Send', size=(chat_width, -1))
         # New voice input button
         self.voice_button = wx.Button(pnl, label='Voice Input', size=(chat_width, -1))
-        self.voice_button.Bind(wx.EVT_BUTTON, self.voice_input)
+        # Привязка событий кнопки к функциям записи голоса
+        self.voice_button.Bind(wx.EVT_LEFT_DOWN, self.start_voice_input) # Начать запись при нажатии кнопки
+        self.voice_button.Bind(wx.EVT_LEFT_UP, self.stop_voice_input)    # Остановить запись при отпускании кнопки
+        
 
         
         # Привязка события нажатия на кнопку к функции send_message
@@ -222,29 +225,52 @@ class ChatbotApp(wx.Frame):
         # Центрирование окна на экране
         self.Centre()
 
-    def voice_input(self, event):
-        r = sr.Recognizer()
-        with sr.Microphone() as source:
-            self.text_history.AppendText("Listening...\n")
-            audio = r.listen(source, timeout=5, phrase_time_limit=10)
+        self.recording = False  # Добавляем атрибут для проверки активности записи
+
+    def start_voice_input(self, event):
+        print('start_voice_input function executed')
+        self.recording = True  # Устанавливаем запись в активное состояние
+        self.text_history.AppendText("Listening...\n")
+        
+        # Инициализация объекта Recognizer и Microphone
+        self.r = sr.Recognizer()
+        self.source = sr.Microphone()
+        self.audio = None
+            
+        # Начало слушания
+        self.source.__enter__()  # Это делает тоже самое, что и "with sr.Microphone() as source:", но позволяет нам удерживать соединение открытым.
+
+    def stop_voice_input(self, event):
+        print('stop_voice_input function executed')
+        self.audio = self.r.listen(self.source, phrase_time_limit=10)
+
+        # Обработка аудиоданных
+        try:
+            user_message = self.r.recognize_google(self.audio)
+            self.text_history.AppendText(f"You: {user_message}\n")
+            bot_response = ask_gpt(user_message)
+            bot_response = bot_response.replace("ChatGPT: ", "")
+            self.text_history.AppendText(f"LisKas: {bot_response}\n")
+            synthesize_speech(bot_response)
+            play_audio('output.mp3')
+        except sr.UnknownValueError:
+            self.text_history.AppendText("Sorry, I did not understand that.\n")
+        except sr.RequestError:
+            self.text_history.AppendText("Could not request results; please check your internet connection.\n")
 
 
-            try:
-                user_message = r.recognize_google(audio)
-                self.text_history.AppendText(f"You: {user_message}\n")
-                bot_response = ask_gpt(user_message)
-                bot_response = bot_response.replace("ChatGPT: ", "")
-                self.text_history.AppendText(f"LisKas: {bot_response}\n")
-                synthesize_speech(bot_response)
-                play_audio('output.mp3')
-            except sr.UnknownValueError:
-                self.text_history.AppendText("Sorry, I did not understand that.\n")
-            except sr.RequestError:
-                self.text_history.AppendText("Could not request results; please check your internet connection.\n")
+        # Проверяем, активна ли запись
+        if self.recording:
+            self.recording = False  # Устанавливаем запись в неактивное состояние
+            print('send_message function executed')
+            user_message = self.input_field.GetValue()  # Обрабатываем текстовый ввод
 
     # Отправка сообщения и получение ответа от бота
     def send_message(self, event):
         user_message = self.input_field.GetValue()
+        # Проверяем, что поле ввода не пустое перед обработкой сообщения
+        if not user_message.strip():
+            return
         bot_response = ask_gpt(user_message)
         # Убираем префикс "ChatGPT:" из ответа бота
         bot_response = bot_response.replace("ChatGPT: ", "")
