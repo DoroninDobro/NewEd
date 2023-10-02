@@ -2,12 +2,32 @@ import openai
 import wx
 from wx.lib.buttons import GenButton, GenBitmapTextButton
 import speech_recognition as sr
+#import os
+#from google.cloud import speech_v1p1beta1 as speech
+#from google.cloud import texttospeech
+import pyaudio
+import wave
+#from google.cloud import speech
+from google.cloud import speech_v1p1beta1 as speech
+#from google.cloud.speech import types
 from google.cloud import texttospeech
 import os
+import io
 
+# Настройки записи
+CHUNK = 1024
+FORMAT = pyaudio.paInt16
+CHANNELS = 1
 
 # Ваш секретный API-ключ от OpenAI (важно не публиковать его и не делиться)
-openai.api_key = "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"
+openai.api_key = "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"
+
+# client = texttospeech.TextToSpeechClient()
+# voices = client.list_voices()
+# for voice in voices.voices:
+#     print(f"Name: {voice.name}")
+#     print(f"Gender: {voice.ssml_gender}")
+#     print(f"Language Codes: {voice.language_codes}\n")
 
 # Название файла, в котором будет храниться история разговора
 CONVERSATION_FILE = "conversation_history.txt"
@@ -98,6 +118,82 @@ def ask_gpt(prompt):
     except Exception as e:
         return str(e)
 
+def record_audio(filename="temp.wav", duration=5, rate=44100):
+    """Запись аудио с микрофона."""
+
+    p = pyaudio.PyAudio()
+
+    stream = p.open(format=FORMAT,
+                    channels=CHANNELS,
+                    rate=rate,
+                    input=True,
+                    frames_per_buffer=CHUNK)
+
+    print("Начинаю запись...")
+
+    frames = []
+
+    for _ in range(0, int(rate / CHUNK * duration)):
+        data = stream.read(CHUNK)
+        frames.append(data)
+
+    print("Запись завершена.")
+
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
+
+    with wave.open(filename, 'wb') as wf:
+        wf.setnchannels(CHANNELS)
+        wf.setsampwidth(p.get_sample_size(FORMAT))
+        wf.setframerate(rate)
+        wf.writeframes(b''.join(frames))
+
+def transcribe_audio(filename="temp.wav", language="en-US"):
+    """Преобразует аудио в текст с помощью Google Speech-to-Text."""
+    
+    client = speech.SpeechClient()
+
+    with io.open(filename, 'rb') as audio_file:
+        content = audio_file.read()
+
+    audio = speech.RecognitionAudio(content=content)
+    config = speech.RecognitionConfig(
+        encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+        sample_rate_hertz=44100,
+        language_code=language,
+    )
+
+    response = client.recognize(config=config, audio=audio)
+
+    for result in response.results:
+        return result.alternatives[0].transcript
+
+    return None
+
+def text_to_speech(text, language="en-US", filename="output.mp3"):
+    """Преобразует текст в аудио с помощью Google Text-to-Speech."""
+
+    client = texttospeech.TextToSpeechClient()
+
+    synthesis_input = texttospeech.SynthesisInput(text=text)
+
+    voice = texttospeech.VoiceSelectionParams(
+        language_code=language,
+        ssml_gender=texttospeech.SsmlVoiceGender.NEUTRAL
+    )
+
+    audio_config = texttospeech.AudioConfig(
+        audio_encoding=texttospeech.AudioEncoding.MP3
+    )
+
+    response = client.synthesize_speech(
+        input=synthesis_input, voice=voice, audio_config=audio_config
+    )
+
+    with open(filename, 'wb') as out:
+        out.write(response.audio_content)
+
 # Класс главного окна чатбота
 class ChatbotApp(wx.Frame):
     def __init__(self, *args, **kw):
@@ -120,7 +216,6 @@ class ChatbotApp(wx.Frame):
         # Привязка обработчиков событий к методам
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_WINDOW_CREATE, self.SetWindowShape)
-        self.Bind(wx.EVT_KEY_UP, self.on_key_up)
 
         self.init_ui()
 
@@ -172,13 +267,9 @@ class ChatbotApp(wx.Frame):
         # New voice input button
         self.voice_button = wx.Button(pnl, label='Voice Input', size=(chat_width, -1))
         # Привязка событий кнопки к функциям записи голоса
-        self.voice_button.Bind(wx.EVT_LEFT_DOWN, self.start_voice_input) # Начать запись при нажатии кнопки
-        self.voice_button.Bind(wx.EVT_LEFT_UP, self.stop_voice_input)    # Остановить запись при отпускании кнопки
-        
-
-        
         # Привязка события нажатия на кнопку к функции send_message
         self.send_button.Bind(wx.EVT_BUTTON, self.send_message)
+        self.voice_button.Bind(wx.EVT_BUTTON, self.start_voice_input)
 
         # Добавление поля истории чата, поля ввода и кнопки "Send" к вертикальному контейнеру
         vbox.Add(self.text_history)
@@ -204,42 +295,59 @@ class ChatbotApp(wx.Frame):
         self.recording = False  # Добавляем атрибут для проверки активности записи
 
     def start_voice_input(self, event):
-        self.recording = True  # Устанавливаем запись в активное состояние
-        self.text_history.AppendText("Listening...\n")
+        record_audio()
+
+        # Распознавание текста
+        text = transcribe_audio()
+
+        if text:
+            # Получение ответа от вашей функции
+            answer = ask_gpt(text)
+
+            # Преобразование текста в аудио
+            text_to_speech(answer)
+
+            # Воспроизведение аудио (может потребоваться дополнительная настройка)
+            play_audio("output.mp3")
+
+    #     global is_recording, stream, frames
+    #     is_recording = True
+    #     frames = []  # Очищаем предыдущие данные
         
-        # Инициализация объекта Recognizer и Microphone
-        self.r = sr.Recognizer()
-        self.source = sr.Microphone()
-        self.audio = None
-            
-        # Начало слушания
-        self.source.__enter__()  # Это делает тоже самое, что и "with sr.Microphone() as source:", но позволяет нам удерживать соединение открытым.
+    #     stream = p.open(format=FORMAT,
+    #                     channels=CHANNELS,
+    #                     rate=RATE,
+    #                     input=True,
+    #                     frames_per_buffer=CHUNK)
+    #     print("* recording")
+    #     a = 1
+    #     while is_recording:
+    #         data = stream.read(CHUNK)
+    #         frames.append(data)
+    
+    # def stop_voice_input(self, event=None):
+    #     global is_recording, stream
+    #     is_recording = False
+    #     print("* done recording")
 
-    def stop_voice_input(self, event):
-        self.audio = self.r.listen(self.source, phrase_time_limit=10)
+    #     stream.stop_stream()
+    #     stream.close()
 
-        # Обработка аудиоданных
-        try:
-            user_message = self.r.recognize_google(self.audio)
-            self.text_history.AppendText(f"You: {user_message}\n")
-            bot_response = ask_gpt(user_message)
-            bot_response = bot_response.replace("ChatGPT: ", "")
-            self.text_history.AppendText(f"LisKas: {bot_response}\n")
-            synthesize_speech(bot_response)
-            play_audio('output.mp3')
-        except sr.UnknownValueError:
-            self.text_history.AppendText("Sorry, I did not understand that.\n")
-        except sr.RequestError:
-            self.text_history.AppendText("Could not request results; please check your internet connection.\n")
+    #     with wave.open(WAVE_OUTPUT_FILENAME, 'wb') as wf:
+    #         wf.setnchannels(CHANNELS)
+    #         wf.setsampwidth(p.get_sample_size(FORMAT))
+    #         wf.setframerate(RATE)
+    #         wf.writeframes(b''.join(frames))
 
-
-        # Проверяем, активна ли запись
-        if self.recording:
-            self.recording = False  # Устанавливаем запись в неактивное состояние
-            user_message = self.input_field.GetValue()  # Обрабатываем текстовый ввод
-
-    # Отправка сообщения и получение ответа от бота
+        # Продолжаем ваш процесс распознавания и ответа
+        # recognized_text = transcribe_audio()
+        # response_text = ask_gpt(recognized_text)  # Предполагая, что у вас уже есть этот метод
+        # output_filename = "response.mp3"
+        # text_to_audio(response_text, output_filename)
+        # play_audio('response.mp3')
+    
     def send_message(self, event):
+        print('You press send')
         user_message = self.input_field.GetValue()
         # Проверяем, что поле ввода не пустое перед обработкой сообщения
         if not user_message.strip():
