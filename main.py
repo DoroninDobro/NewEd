@@ -7,7 +7,7 @@ import os
 
 
 # Ваш секретный API-ключ от OpenAI (важно не публиковать его и не делиться)
-openai.api_key = "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"
+openai.api_key = "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"
 
 # Название файла, в котором будет храниться история разговора
 CONVERSATION_FILE = "conversation_history.txt"
@@ -120,10 +120,6 @@ class ChatbotApp(wx.Frame):
         # Привязка обработчиков событий к методам
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_WINDOW_CREATE, self.SetWindowShape)
-        self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
-        self.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
-        self.Bind(wx.EVT_MOTION, self.OnMouseMove)
-        self.Bind(wx.EVT_RIGHT_UP, self.OnRightUp)
         self.Bind(wx.EVT_KEY_UP, self.on_key_up)
 
         self.init_ui()
@@ -148,26 +144,6 @@ class ChatbotApp(wx.Frame):
         dc.SetBackground(wx.Brush("#A1FFA1"))  # Светло-салатовый цвет
         dc.Clear()
         dc.DrawBitmap(self.bmp, 0, 0, True)
-
-    # Обработчики для возможности перетаскивать окно
-    def OnLeftDown(self, evt):
-        self.CaptureMouse()
-        pos = self.ClientToScreen(evt.GetPosition())
-        origin = self.GetPosition()
-        self.delta = wx.Point(pos.x - origin.x, pos.y - origin.y)
-
-    def OnMouseMove(self, evt):
-        if evt.Dragging() and evt.LeftIsDown():
-            pos = self.ClientToScreen(evt.GetPosition())
-            newPos = (pos.x - self.delta.x, pos.y - self.delta.y)
-            self.Move(newPos)
-
-    def OnLeftUp(self, evt):
-        if self.HasCapture():
-            self.ReleaseMouse()
-
-    def OnRightUp(self, evt):
-        self.Close()
 
     def init_ui(self):
         # Создание панели на основном окне
@@ -228,7 +204,6 @@ class ChatbotApp(wx.Frame):
         self.recording = False  # Добавляем атрибут для проверки активности записи
 
     def start_voice_input(self, event):
-        print('start_voice_input function executed')
         self.recording = True  # Устанавливаем запись в активное состояние
         self.text_history.AppendText("Listening...\n")
         
@@ -241,7 +216,6 @@ class ChatbotApp(wx.Frame):
         self.source.__enter__()  # Это делает тоже самое, что и "with sr.Microphone() as source:", но позволяет нам удерживать соединение открытым.
 
     def stop_voice_input(self, event):
-        print('stop_voice_input function executed')
         self.audio = self.r.listen(self.source, phrase_time_limit=10)
 
         # Обработка аудиоданных
@@ -262,7 +236,6 @@ class ChatbotApp(wx.Frame):
         # Проверяем, активна ли запись
         if self.recording:
             self.recording = False  # Устанавливаем запись в неактивное состояние
-            print('send_message function executed')
             user_message = self.input_field.GetValue()  # Обрабатываем текстовый ввод
 
     # Отправка сообщения и получение ответа от бота
@@ -277,12 +250,6 @@ class ChatbotApp(wx.Frame):
         self.text_history.AppendText(f"You: {user_message}\n")
         self.text_history.AppendText(f"LisKas: {bot_response}\n")
         self.input_field.Clear()
-
-    # Отправка сообщения при нажатии на клавишу Enter
-    def on_key_up(self, event):
-        keycode = event.GetKeyCode()
-        if keycode == wx.WXK_RETURN or keycode == wx.WXK_NUMPAD_ENTER:
-            self.send_message(None)
 
 # Запуск приложения
 if __name__ == '__main__':
