@@ -187,7 +187,7 @@ def text_to_speech(text, language="en-US", filename="output.mp3"):
 class ChatbotApp(wx.Frame):
     def __init__(self, *args, **kw):
         # Заранее инициализируем модель vosk так как она подгружается ~ 2 секунды.
-        self.speechToText = SpeechToText.SpeechToText(sample_rate=SAMPLE_RATE)
+        self.speechToText = SpeechToText.SpeechToText()
 
         # Задаем стили для окна
         style = wx.FRAME_SHAPED | wx.SIMPLE_BORDER
@@ -291,10 +291,9 @@ class ChatbotApp(wx.Frame):
         self.recording = False  # Добавляем атрибут для проверки активности записи
 
     def start_voice_input(self, event):
-        record_audio()
 
         # Распознавание текста
-        text = self.speechToText.audio_file_to_text()
+        text = self.speechToText.backgroundWiretapping(return_=True)
 
         if text:
             # Получение ответа от вашей функции
