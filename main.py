@@ -14,6 +14,7 @@ from google.cloud import texttospeech
 import os
 import io
 import SpeechToText
+import TextToSpeech
 
 # Настройки записи
 CHUNK = 1024
@@ -188,6 +189,12 @@ class ChatbotApp(wx.Frame):
     def __init__(self, *args, **kw):
         # Заранее инициализируем модель vosk так как она подгружается ~ 2 секунды.
         self.speechToText = SpeechToText.SpeechToText()
+        print("The model is loaded SpeechToText")
+
+        # Очень долго прогружается
+        self.textToSpeech = TextToSpeech.TextToSpeech(model_id='v3_1_ru',
+                                                      sample_rate=48000)
+        print("The model is loaded TextToSpeech")
 
         # Задаем стили для окна
         style = wx.FRAME_SHAPED | wx.SIMPLE_BORDER
@@ -299,11 +306,10 @@ class ChatbotApp(wx.Frame):
             # Получение ответа от вашей функции
             answer = ask_gpt(text)
 
-            # Преобразование текста в аудио
-            text_to_speech(answer)
-
-            # Воспроизведение аудио (может потребоваться дополнительная настройка)
-            play_audio("output.mp3")
+        # Генерируем аудио
+        audio = self.textToSpeech.audioGeneration(text)
+        # Воспроизводим аудио
+        self.textToSpeech.readAudio(audio)
 
     #     global is_recording, stream, frames
     #     is_recording = True
