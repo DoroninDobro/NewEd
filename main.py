@@ -192,8 +192,9 @@ class ChatbotApp(wx.Frame):
         print("The model is loaded SpeechToText")
 
         # Очень долго прогружается
-        self.textToSpeech = TextToSpeech.TextToSpeech(model_id='v3_1_ru',
-                                                      sample_rate=48000)
+        self.textToSpeech = TextToSpeech.TextToSpeech(model_id='v3_en',
+                                                      sample_rate=24000,
+                                                      language="en")
         print("The model is loaded TextToSpeech")
 
         # Задаем стили для окна

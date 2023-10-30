@@ -14,7 +14,7 @@ class TextToSpeech:
     sample_rate = int(_device_info["default_samplerate"])
     # Модель может работать только при таких значениях
     for i in [8000, 24000, 48000]:
-        if sample_rate > i:
+        if sample_rate >= i:
             sample_rate = i
 
     def __init__(self,
@@ -70,8 +70,8 @@ class TextToSpeech:
             self.audioGeneration("Текст для генерации")
             self.audioGeneration("Просто нужно для погрузки модели")
         elif self._language == "en":
-            self.audioGeneration("Text to generate")
-            self.audioGeneration("Just need to load the model")
+            self.audioGeneration("Text to generate. And additional words.")
+            self.audioGeneration("Just need to load the model. And these are other additional words.")
 
     def audioGeneration(self, text: str):
         """
@@ -82,7 +82,7 @@ class TextToSpeech:
         """
         st = time.time()
         audio = self._model.apply_tts(text=text,
-                                      # speaker=self.speaker,
+                                      speaker=self.speaker,
                                       sample_rate=self.sample_rate
                                       )
         print(time.time() - st)
