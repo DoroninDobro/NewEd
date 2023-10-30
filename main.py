@@ -8,7 +8,7 @@ import speech_recognition as sr
 import pyaudio
 import wave
 # from google.cloud import speech
-from google.cloud import speech_v1p1beta1 as speech
+# from google.cloud import speech_v1p1beta1 as speech
 # from google.cloud.speech import types
 from google.cloud import texttospeech
 import os
@@ -299,17 +299,19 @@ class ChatbotApp(wx.Frame):
 
     def start_voice_input(self, event):
 
-        # Распознавание текста
+        # Распознавание текста(Тут же запись голоса)
         text = self.speechToText.backgroundWiretapping(return_=True)
 
+        answer = None
         if text:
             # Получение ответа от вашей функции
             answer = ask_gpt(text)
 
-        # Генерируем аудио
-        audio = self.textToSpeech.audioGeneration(text)
-        # Воспроизводим аудио
-        self.textToSpeech.readAudio(audio)
+        if answer:
+            # Генерируем аудио
+            audio = self.textToSpeech.audioGeneration(answer)
+            # Воспроизводим аудио
+            self.textToSpeech.readAudio(audio)
 
     #     global is_recording, stream, frames
     #     is_recording = True
