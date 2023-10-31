@@ -21,7 +21,7 @@ class TextToSpeech:
                  speaker: str = None,
                  language: str = 'ru',
                  model_id: str = None,
-                 sample_rate: int = sample_rate,
+                 sample_rate: int = None,
                  cpu_or_gpu: str = "cpu"
                  ):
         """
