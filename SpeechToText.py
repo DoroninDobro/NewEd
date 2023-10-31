@@ -11,14 +11,14 @@ class SpeechToText:
     Класс для распознавания аудио через Vosk и преобразования его в текст.
     Поддерживаются форматы аудио: wav
     """
-    _device_info = sd.query_devices("input")  # Все input устройства
-    # Частота дискретизации устройства по умолчанию.
-    sample_rate = int(_device_info["default_samplerate"])
+    # _device_info = sd.query_devices("input")  # Все input устройства
+    # # Частота дискретизации устройства по умолчанию.
+    # sample_rate = int(_device_info["default_samplerate"])
 
     def __init__(self,
                  model_path=r".\model\vosk-model-small-en-us-0.15",
                  ffmpeg_path=r".\ffmpeg",
-                 sample_rate=sample_rate,
+                 sample_rate=None,
                  device=1
                  ):
         """

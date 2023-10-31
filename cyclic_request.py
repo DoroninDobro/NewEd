@@ -9,7 +9,7 @@ CONVERSATION_FILE = "conversation_history.txt"
 openai.api_key = "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"
 
 # Заранее инициализируем модель vosk. Английский
-speechToText = SpeechToText.SpeechToText()
+speechToText = SpeechToText.SpeechToText(sample_rate=44100)
 print("The model is loaded SpeechToText")
 
 # Модель синтеза речи. Английский
