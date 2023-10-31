@@ -15,7 +15,7 @@ print("The model is loaded SpeechToText")
 # Модель синтеза речи. Английский
 textToSpeech = TextToSpeech.TextToSpeech(
     model_id='v3_en',
-    sample_rate=8000,
+    sample_rate=24000,
     language="en")
 print("The model is loaded TextToSpeech")
 

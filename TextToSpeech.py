@@ -10,12 +10,12 @@ class TextToSpeech:
     Для ru и en
     """
 
-    _device_info = sd.query_devices('output')  # Все output устройства
-    sample_rate = int(_device_info["default_samplerate"])
-    # Модель может работать только при таких значениях
-    for i in [8000, 24000, 48000]:
-        if sample_rate >= i:
-            sample_rate = i
+    # _device_info = sd.query_devices('output')  # Все output устройства
+    # sample_rate = int(_device_info["default_samplerate"])
+    # # Модель может работать только при таких значениях
+    # for i in [8000, 24000, 48000]:
+    #     if sample_rate >= i:
+    #         sample_rate = i
 
     def __init__(self,
                  speaker: str = None,
