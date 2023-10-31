@@ -105,6 +105,7 @@ class SpeechToText:
         with sd.RawInputStream(samplerate=self.sample_rate, blocksize=8000,
                                device=self._device, dtype='int16',
                                channels=1, callback=_qCallback):
+            print("Запись")
             while True:
                 data = self.q.get()  # берем пакет записи с микрофона
                 # Загружаем данные! И возвращает 1 если законченная фраза

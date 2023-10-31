@@ -37,7 +37,7 @@ class TextToSpeech:
 
         :arg language: str "ru"
         :arg model_id: str версия модели
-        :arg sample_rate: int Частота дискретизации
+        :arg sample_rate: int Частота дискретизации [8000, 24000, 48000]
         :arg cpu_or_gpu: str на чем будет обрабатываться cpu, cuda, ipu, xpu,
         mkldnn, opengl, opencl, ideep, hip, ve, fpga, ort, xla, lazy, vulkan, mps, meta, hpu, mtia,
         """
